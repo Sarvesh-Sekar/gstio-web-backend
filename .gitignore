@@ -1,5 +1,6 @@
 node_modules/
 
+migration/
 # Build output (compiled JS files)
 dist/
 
