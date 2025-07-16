@@ -91,9 +91,15 @@ export class UserController {
         });
       }
 
-      return res.send({ message: "OTP Verified and User created successfully" });
+      await this.redisService.deletKey(key);
+
+      return res.send({
+        message: "OTP Verified and User created successfully",
+      });
     } catch (error) {}
   };
 
-  
+  signIn = async (req: Request, res: Response) => {
+    const { email, password } = req.body;
+  };
 }
