@@ -101,5 +101,35 @@ export class UserController {
 
   signIn = async (req: Request, res: Response) => {
     const { email, password } = req.body;
+
+    const userExists = await this.userService.findUser(email);
+    if (!userExists)
+      return res.status(406).json({ message: "User Does Not Exist" });
+
+    
+  };
+
+  googleSign = async (req: Request, res: Response) => {
+    const { code } = req.body;
+
+    const tokenData = await this.userService.getAccessToken(code);
+
+    const { accessToken, refreshToken } = tokenData;
+
+    const userInfo = await this.userService.getUserInfoFromGoogle(accessToken);
+
+    const { email, name, sub: googleId } = userInfo;
+
+    const userExists = await this.userService.findUser(email);
+    if (!userExists)
+      return res.status(406).json({ message: "User Does Not Exist" });
+
+    const token = await this.userService.generateJWTToken(
+      email,
+      name,
+      googleId
+    );
+
+    return res.status(200).json({ token });
   };
 }
