@@ -10,7 +10,7 @@ export class UserController {
     private userService: UserService,
     private redisService: RedisService
   ) {}
-  signup = async (req: Request, res: Response) => {
+  submitRegistration = async (req: Request, res: Response) => {
     try {
       const userData = req.body;
       const userValidation = postUserValidation.safeParse(userData);
@@ -19,49 +19,37 @@ export class UserController {
           .status(406)
           .json({ message: userValidation.error.flatten() });
       }
-      userData.password = await AuthHelper.encryptText(userData.password);
 
       const userExists = await this.userService.findUser(userData.email);
       if (userExists)
         return res.status(406).json({ message: "User Already Exists" });
 
       const key = userData.email;
-      const value = JSON.stringify({
-        password: userData.password,
-        otp: 0,
-      });
-      await this.redisService.setValue(key, value, 360);
+      const value = "0";
 
-      return res.status(201).json(userData);
+      await this.redisService.setValue(key, value, 300);
+
+      return res.status(201).json({ message: "User Registered Successfully" });
     } catch (err) {
+      console.log(err);
       return res.status(500).json({ message: "Internal Server Error" });
     }
   };
 
-  generateOtp = async (email: string, password: string) => {
-    password = await AuthHelper.encryptText(password);
-    const otp = Math.floor(1000 + Math.random() * 9000);
+  generateOtp = async (email: string) => {
+    const value = Math.floor(1000 + Math.random() * 9000);
     const key = email;
-    const value = JSON.stringify({ password, otp });
-    await this.redisService.setValue(key, value, 60);
 
-    return otp;
+    await this.redisService.setValue(key, value.toString(), 300);
+
+    return value;
   };
 
   sendMail = async (req: Request, res: Response) => {
     try {
       const userData = req.body;
-      const userValidation = postUserValidation.safeParse(userData);
-      if (!userValidation.success) {
-        return res
-          .status(406)
-          .json({ message: userValidation.error.flatten() });
-      }
 
-      const generatedOtp = await this.generateOtp(
-        userData?.email,
-        userData?.password
-      );
+      const generatedOtp = await this.generateOtp(userData?.email);
       const mailOptions = {
         from: process.env.EMAIL,
         to: userData.email,
@@ -82,34 +70,47 @@ export class UserController {
 
       const key = email;
       const value = await this.redisService.getValue(key);
-      const parsedValue = JSON.parse(value);
 
-      if (parsedValue.otp === Number(otp)) {
-        await this.userService.postUser({
-          email: email,
-          password: parsedValue.password,
-        });
+      if (value !== otp) {
+        return res.status(401).json({ message: "Invalid OTP" });
       }
 
-      await this.redisService.deletKey(key);
-
-      return res.send({
+      return res.status(200).json({
         message: "OTP Verified and User created successfully",
       });
     } catch (error) {}
   };
 
-  signIn = async (req: Request, res: Response) => {
-    const { email, password } = req.body;
+  signup = async (req: Request, res: Response) => {
+    try {
+      const userData = req.body;
+      const userValidation = postUserValidation.safeParse(userData);
+      if (!userValidation.success) {
+        return res
+          .status(406)
+          .json({ message: userValidation.error.flatten() });
+      }
 
-    const userExists = await this.userService.findUser(email);
-    if (!userExists)
-      return res.status(406).json({ message: "User Does Not Exist" });
+      const userExists = await this.userService.findUser(userData.email);
+      if (userExists)
+        return res.status(406).json({ message: "User Already Exists" });
 
-    
+      const cacheData = await this.redisService.getValue(userData.email);
+      if (cacheData?.otp)
+        return res.status(406).json({ message: "Email Not Verified" });
+
+      userData.password = await AuthHelper.encryptText(userData.password);
+
+      const user = await this.userService.postUser(userData);
+      await this.redisService.deleteKey(userData?.email);
+
+      return res.status(200).json({ message: "User Created Successfully" });
+    } catch (error) {
+      return res.status(500).json({ message: "Internal Server Error" });
+    }
   };
 
-  googleSign = async (req: Request, res: Response) => {
+  googleSignIn = async (req: Request, res: Response) => {
     const { code } = req.body;
 
     const tokenData = await this.userService.getAccessToken(code);
@@ -131,5 +132,32 @@ export class UserController {
     );
 
     return res.status(200).json({ token });
+  };
+
+  manualSignIn = async (req: Request, res: Response) => {
+    try {
+      const { email, password, username } = req.body;
+
+      const userExists = await this.userService.findUser(email);
+      if (!userExists)
+        return res.status(406).json({ message: "User Does Not Exist" });
+
+      const isPasswordCorrect = await AuthHelper.compareText(
+        password,
+        userExists?.password
+      );
+
+      if (!isPasswordCorrect)
+        return res.status(406).json({ message: "Incorrect Password" });
+
+      const token = await this.userService.generateJWTToken(
+        userExists.email,
+        userExists.name
+      );
+
+      return res.status(200).json({ token });
+    } catch (err) {
+      return res.status(500).json({ message: "Internal Server Error" });
+    }
   };
 }

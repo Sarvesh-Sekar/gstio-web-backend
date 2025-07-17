@@ -1,7 +1,7 @@
 import { AppDataSource } from "../../dataSource/dataSource";
 import { typePostUser } from "./user.types";
 import { User } from "../../entity/User";
-import { QueryFailedError } from "typeorm";
+import { QueryFailedError, createQueryBuilder } from "typeorm";
 import axios from "axios";
 import dotenv from "dotenv";
 import { TOKEN_URI, USER_INFO_URI } from "../../urls";
@@ -9,21 +9,28 @@ import { AuthHelper } from "../../helpers/auth.helpers";
 dotenv.config();
 export class UserService {
   constructor() {}
-  findUser = async (email: string) => {
+  findUser = async (email?: string, username?: string): Promise<any> => {
     try {
       const userRepo = AppDataSource.getRepository(User);
-      const user = await userRepo.findOne({ where: { email: email } });
+      const user = await userRepo
+        .createQueryBuilder("user")
+        .where("user.email = :email", { email: email })
+        .orWhere("user.name = :username", { username: username })
+        .getOne();
       return user;
     } catch (err) {
       return err;
     }
   };
+
+ 
   postUser = async (data: typePostUser) => {
     try {
       const userRepo = AppDataSource.getRepository(User);
       const user = new User();
       user.email = data.email;
       user.password = data.password;
+      user.name = data.username
 
       const res = await userRepo.save(user);
       return res;
@@ -74,7 +81,7 @@ export class UserService {
     }
   };
 
-  generateJWTToken = async (email: string, name: string, id: string) => {
+  generateJWTToken = async (email: string, name: string, id?: string) => {
     try {
       const payload = {
         email: email,

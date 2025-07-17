@@ -15,8 +15,13 @@ export class AuthHelper {
     return hashedText;
   }
 
+  static async compareText(text:string,hashedText:string)
+  {
+    return await bcrypt.compare(text,hashedText);
+  }
+
   static async generateJwt(payload: JWTPayload) {
-    const { JWT_SECRET_KEY } = process.env;
+    const { JWT_SECRET_KEY } = process.env as any;
     const token = jwt.sign(payload, JWT_SECRET_KEY, {
       expiresIn: "1d",
     });
