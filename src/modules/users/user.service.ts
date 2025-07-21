@@ -23,14 +23,13 @@ export class UserService {
     }
   };
 
- 
   postUser = async (data: typePostUser) => {
     try {
       const userRepo = AppDataSource.getRepository(User);
       const user = new User();
       user.email = data.email;
       user.password = data.password;
-      user.name = data.username
+      user.name = data.username;
 
       const res = await userRepo.save(user);
       return res;
@@ -45,6 +44,25 @@ export class UserService {
 
       // Unknown error
       throw new Error("Failed to create user: " + err.message);
+    }
+  };
+
+  updateUser = async (data: typePostUser) => {
+    try {
+      const userRepo = AppDataSource.getRepository(User);
+      const user = await userRepo
+        .createQueryBuilder("user")
+        .where("user.email = :email", { email: data.email })
+        .getOne();
+      if (!user) {
+        throw new Error("User not found");
+      }
+
+      user.name = data.username;
+      const res = await userRepo.update({email:data.email}, { name: user.name });
+      return res;
+    } catch (err) {
+      throw err;
     }
   };
 

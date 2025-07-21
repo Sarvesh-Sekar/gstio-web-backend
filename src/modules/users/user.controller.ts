@@ -25,31 +25,49 @@ export class UserController {
         return res.status(406).json({ message: "User Already Exists" });
 
       const key = userData.email;
-      const value = "0";
+      const hashedPassword = await AuthHelper.encryptText(userData.password);
+      const value = JSON.stringify({
+        password: hashedPassword,
+        otp: 0,
+      });
 
       await this.redisService.setValue(key, value, 300);
 
-      return res.status(201).json({ message: "User Registered Successfully" });
+      return res.status(201).json({
+        status: "registered",
+        message: "User Registered Successfully",
+      });
     } catch (err) {
       console.log(err);
       return res.status(500).json({ message: "Internal Server Error" });
     }
   };
 
-  generateOtp = async (email: string) => {
-    const value = Math.floor(1000 + Math.random() * 9000);
+  generateOtp = async (email: string, password: string) => {
+    const otp = Math.floor(1000 + Math.random() * 9000);
     const key = email;
+    const oldValue = await this.redisService.getValue(key);
+    
 
-    await this.redisService.setValue(key, value.toString(), 300);
+    const parsedOldValue = JSON.parse(oldValue);
+    const value = JSON.stringify({
+      password:parsedOldValue.password,
+      otp: otp,
+    });
 
-    return value;
+    await this.redisService.setValue(key, value, 300);
+
+    return otp;
   };
 
   sendMail = async (req: Request, res: Response) => {
     try {
       const userData = req.body;
 
-      const generatedOtp = await this.generateOtp(userData?.email);
+      const generatedOtp = await this.generateOtp(
+        userData?.email,
+        userData?.password
+      );
       const mailOptions = {
         from: process.env.EMAIL,
         to: userData.email,
@@ -71,9 +89,17 @@ export class UserController {
       const key = email;
       const value = await this.redisService.getValue(key);
 
-      if (value !== otp) {
+      const cachedValue = JSON.parse(value);
+      if (cachedValue.otp !== otp) {
         return res.status(401).json({ message: "Invalid OTP" });
       }
+
+      await this.userService.postUser({
+        email: email,
+        password: cachedValue.password,
+      });
+
+      await this.redisService.deleteKey(key);
 
       return res.status(200).json({
         message: "OTP Verified and User created successfully",
@@ -81,31 +107,19 @@ export class UserController {
     } catch (error) {}
   };
 
-  signup = async (req: Request, res: Response) => {
+  completeSignUp = async (req: Request, res: Response) => {
     try {
-      const userData = req.body;
-      const userValidation = postUserValidation.safeParse(userData);
-      if (!userValidation.success) {
-        return res
-          .status(406)
-          .json({ message: userValidation.error.flatten() });
-      }
+      const { email, username } = req.body;
 
-      const userExists = await this.userService.findUser(userData.email);
-      if (userExists)
-        return res.status(406).json({ message: "User Already Exists" });
+      const user = await this.userService.findUser(email);
+      if (!user)
+        return res.status(406).json({ message: "User Does Not Exist" });
+      console.log(user);
 
-      const cacheData = await this.redisService.getValue(userData.email);
-      if (cacheData?.otp)
-        return res.status(406).json({ message: "Email Not Verified" });
-
-      userData.password = await AuthHelper.encryptText(userData.password);
-
-      const user = await this.userService.postUser(userData);
-      await this.redisService.deleteKey(userData?.email);
-
-      return res.status(200).json({ message: "User Created Successfully" });
-    } catch (error) {
+      user.username = username;
+      await this.userService.updateUser(user);
+      return res.status(200).json({ message: "Username Updated Successfully" });
+    } catch (err) {
       return res.status(500).json({ message: "Internal Server Error" });
     }
   };

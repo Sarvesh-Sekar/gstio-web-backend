@@ -1,7 +1,7 @@
 const redisClient = require("../config/redisClient");
 
 export class RedisService {
-  setValue = async (key: string, value: string, expireTime: number) => {
+  setValue = async (key: string, value: any, expireTime: number) => {
     return await redisClient.setEx(key, expireTime, value);
   };
 
