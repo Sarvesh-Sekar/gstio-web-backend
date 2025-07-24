@@ -59,7 +59,10 @@ export class UserService {
       }
 
       user.name = data.username;
-      const res = await userRepo.update({email:data.email}, { name: user.name });
+      const res = await userRepo.update(
+        { email: data.email },
+        { name: user.name }
+      );
       return res;
     } catch (err) {
       throw err;
@@ -68,7 +71,7 @@ export class UserService {
 
   getAccessToken = async (code: string) => {
     try {
-      const payload = {
+      const payload: any = {
         code: code,
         client_id: process.env.GOOGLE_CLIENT_ID,
         client_secret: process.env.GOOGLE_CLIENT_SECRET,
@@ -76,12 +79,15 @@ export class UserService {
         grant_type: "authorization_code",
       };
 
-      const response = await axios.post(TOKEN_URI, null, {
-        params: { payload },
+      const response = await axios.post(TOKEN_URI, payload, {
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
       });
 
       return response?.data;
     } catch (err) {
+      console.log(err);
       throw err;
     }
   };

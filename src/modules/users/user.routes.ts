@@ -8,6 +8,6 @@ router.post("/signup", UserModule.controller.completeSignUp);
 router.post("/generate-otp", UserModule.controller.sendMail);
 router.post("/verify-otp", UserModule.controller.verifyOtp);
 router.post("/auth/google", UserModule.controller.googleSignIn);
-router.post("/signin", UserModule.controller.manualSignIn);
+router.post("/login", UserModule.controller.manualSignIn);
 
 export default router;

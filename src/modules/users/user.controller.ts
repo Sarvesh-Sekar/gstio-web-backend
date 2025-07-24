@@ -43,15 +43,14 @@ export class UserController {
     }
   };
 
-  generateOtp = async (email: string, password: string) => {
+  generateOtp = async (email: string) => {
     const otp = Math.floor(1000 + Math.random() * 9000);
     const key = email;
     const oldValue = await this.redisService.getValue(key);
-    
 
     const parsedOldValue = JSON.parse(oldValue);
     const value = JSON.stringify({
-      password:parsedOldValue.password,
+      password: parsedOldValue.password,
       otp: otp,
     });
 
@@ -64,10 +63,7 @@ export class UserController {
     try {
       const userData = req.body;
 
-      const generatedOtp = await this.generateOtp(
-        userData?.email,
-        userData?.password
-      );
+      const generatedOtp = await this.generateOtp(userData?.email);
       const mailOptions = {
         from: process.env.EMAIL,
         to: userData.email,
@@ -90,7 +86,8 @@ export class UserController {
       const value = await this.redisService.getValue(key);
 
       const cachedValue = JSON.parse(value);
-      if (cachedValue.otp !== otp) {
+
+      if (cachedValue.otp !== Number(otp)) {
         return res.status(401).json({ message: "Invalid OTP" });
       }
 
@@ -129,9 +126,9 @@ export class UserController {
 
     const tokenData = await this.userService.getAccessToken(code);
 
-    const { accessToken, refreshToken } = tokenData;
+    const { access_token, refreshToken } = tokenData;
 
-    const userInfo = await this.userService.getUserInfoFromGoogle(accessToken);
+    const userInfo = await this.userService.getUserInfoFromGoogle(access_token);
 
     const { email, name, sub: googleId } = userInfo;
 
