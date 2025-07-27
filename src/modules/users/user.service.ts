@@ -1,5 +1,5 @@
 import { AppDataSource } from "../../dataSource/dataSource";
-import { typePostUser } from "./user.types";
+import { typeUser } from "./user.types";
 import { User } from "../../entity/User";
 import { QueryFailedError, createQueryBuilder } from "typeorm";
 import axios from "axios";
@@ -23,7 +23,7 @@ export class UserService {
     }
   };
 
-  postUser = async (data: typePostUser) => {
+  postUser = async (data: typeUser) => {
     try {
       const userRepo = AppDataSource.getRepository(User);
       const user = new User();
@@ -47,7 +47,7 @@ export class UserService {
     }
   };
 
-  updateUser = async (data: typePostUser) => {
+  updateUser = async (data: typeUser) => {
     try {
       const userRepo = AppDataSource.getRepository(User);
       const user = await userRepo

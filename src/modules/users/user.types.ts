@@ -1,5 +1,5 @@
-export type typePostUser = {
+export type typeUser = {
   email: string;
   password: string;
-  username?:string;
+  username?: string;
 };

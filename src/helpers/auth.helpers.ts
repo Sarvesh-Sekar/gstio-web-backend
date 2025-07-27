@@ -15,9 +15,8 @@ export class AuthHelper {
     return hashedText;
   }
 
-  static async compareText(text:string,hashedText:string)
-  {
-    return await bcrypt.compare(text,hashedText);
+  static async compareText(text: string, hashedText: string) {
+    return await bcrypt.compare(text, hashedText);
   }
 
   static async generateJwt(payload: JWTPayload) {
@@ -26,5 +25,11 @@ export class AuthHelper {
       expiresIn: "1d",
     });
     return token;
+  }
+
+  static async verifyJwt(token: string) {
+    const { JWT_SECRET_KEY } = process.env as any;
+    const decoded = jwt.verify(token, JWT_SECRET_KEY);
+    return decoded;
   }
 }
