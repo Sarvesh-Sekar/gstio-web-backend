@@ -141,7 +141,8 @@ export class UserController {
       name,
       googleId
     );
-
+    
+    // console.log('token',token)
     return res.status(200).json({ token });
   };
 

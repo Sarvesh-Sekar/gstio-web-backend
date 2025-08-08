@@ -32,7 +32,13 @@
     "dev": "nodemon src/server.ts",
     "build": "tsc",
     "start": "node dist/server.js",
-    "typeorm": "ts-node-esm ./node_modules/typeorm/cli.js"
+    "typeorm": "ts-node-esm ./node_modules/typeorm/cli.js",
+    "migration:create": "npm run typeorm migration:create ./migration/${npm_config_name} -- -d ./src/dataSource/dataSource.ts",
+    "migration:generate": "npm run typeorm migration:generate ./migration/$npm_config_name -- -d ./src/dataSource/dataSource.ts",
+    "migration:run": "npm run typeorm migration:run -- -d ./src/dataSource/dataSource.ts",
+    "migration:revert": "npm run typeorm migration:revert -- -d ./src/dataSource/dataSource.ts",
+    "migration:show": "npm run typeorm migration:show -- -d ./src/dataSource/dataSource.ts",
+    "schema:sync": "npm run typeorm schema:sync -- -d ./src/dataSource/dataSource.ts"
   },
   "keywords": [],
   "author": "",
