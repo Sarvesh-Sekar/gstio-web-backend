@@ -1,0 +1,38 @@
+version: "3.9"
+
+services:
+  backend:
+    build: .
+    container_name: gstio-backend
+    restart: unless-stopped
+    env_file: .env
+    ports: -"4000:4000"
+    depends_on:
+      - postgres
+      - redis
+
+  postgres:
+    image: postgres:15
+    container_name: gstio-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: gstdb-admin
+      POSTGRES_PASSWORD: gstiowebdb1234
+      POSTGRES_DB: gstio-db
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7
+    container_name: gstio-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redisdata:/data
+
+volumes:
+  pgdata:
+  redisdata:

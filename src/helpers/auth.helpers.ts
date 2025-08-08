@@ -29,7 +29,7 @@ export class AuthHelper {
 
   static async verifyJwt(token: string) {
     const { JWT_SECRET_KEY } = process.env as any;
-    const decoded = jwt.verify(token, JWT_SECRET_KEY);
+    const decoded: any = jwt.verify(token, JWT_SECRET_KEY);
     return decoded;
   }
 }
