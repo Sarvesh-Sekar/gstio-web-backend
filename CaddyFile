@@ -1,3 +1,3 @@
-gstio-backend.run.placeholder {
+gstio-backend.run.place{
      reverse_proxy backend:4000
 }
