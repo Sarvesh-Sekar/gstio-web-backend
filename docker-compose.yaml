@@ -1,14 +1,14 @@
-version: "3"
+version: "3.8"
 
 services:
   backend:
     build: .
-    container_name: gstio-backend
+    container_name: backend
     restart: unless-stopped
     env_file:
       - .env
     expose:
-      - "4000" # expose only to internal network
+      - "4000" # only internal access for Caddy
     depends_on:
       - postgres
       - redis
@@ -68,5 +68,4 @@ volumes:
 
 networks:
   webnet:
-
-
+    driver: bridge
