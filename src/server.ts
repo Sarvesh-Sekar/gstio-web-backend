@@ -10,6 +10,7 @@ app.use(
     origin: "https://gstio-web.vercel.app", // your frontend domain
     methods: ["GET", "POST", "PUT", "DELETE"],
     allowedHeaders: ["Content-Type", "Authorization"],
+    credentials:true
   })
 );
 app.use(express.json());
