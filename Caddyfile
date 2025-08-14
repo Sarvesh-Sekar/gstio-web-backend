@@ -1,0 +1,9 @@
+gstio-backend.run.place {
+    reverse_proxy backend:4000
+
+    header {
+        Access-Control-Allow-Origin "https://gstio-web.vercel.app"
+        Access-Control-Allow-Methods "GET, POST, OPTIONS"
+        Access-Control-Allow-Headers "Content-Type, Authorization"
+    }
+}
