@@ -9,13 +9,15 @@ import { AuthHelper } from "../../helpers/auth.helpers";
 dotenv.config();
 export class UserService {
   constructor() {}
-  findUser = async (email?: string, username?: string): Promise<any> => {
+  findUser = async (identifier: string): Promise<any> => {
     try {
       const userRepo = AppDataSource.getRepository(User);
+
       const user = await userRepo
-        .createQueryBuilder("user")
-        .where("user.email = :email", { email: email })
-        .orWhere("user.name = :username", { username: username })
+        .createQueryBuilder("users")
+        .where("users.id::text = :identifier", { identifier })
+        .orWhere("users.email = :identifier", { identifier })
+        .orWhere("users.userName = :identifier", { identifier })
         .getOne();
       return user;
     } catch (err) {
@@ -29,7 +31,6 @@ export class UserService {
       const user = new User();
       user.email = data.email;
       user.password = data.password;
-      user.name = data.username;
 
       const res = await userRepo.save(user);
       return res;
@@ -58,10 +59,21 @@ export class UserService {
         throw new Error("User not found");
       }
 
-      user.name = data.username;
+      user.userName = data.userName;
+      user.companyName = data.companyName;
+      user.gstId = data.gstId;
+      user.role = data.role;
+      user.verfied = data.verfied;
+
       const res = await userRepo.update(
         { email: data.email },
-        { name: user.name }
+        {
+          userName: user.userName,
+          companyName: user.companyName,
+          gstId: user.gstId,
+          role: user.role,
+          verfied: user.verfied,
+        }
       );
       return res;
     } catch (err) {

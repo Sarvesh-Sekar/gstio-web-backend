@@ -1,5 +1,9 @@
 export type typeUser = {
   email: string;
   password: string;
-  username?: string;
+  userName?: string;
+  gstId?: string;
+  companyName?: string;
+  role?: "companyAdmin" | "Auditor";
+  verfied?: boolean;
 };

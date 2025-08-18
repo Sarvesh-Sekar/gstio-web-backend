@@ -31,11 +31,18 @@ export class UserController {
         otp: 0,
       });
 
-      await this.redisService.setValue(key, value, 300);
+      console.log(hashedPassword);
+
+      const postUserData = {
+        email:userData.email,
+        password:hashedPassword
+      }
+      const user = await this.userService.postUser(postUserData);
 
       return res.status(201).json({
         status: "registered",
         message: "User Registered Successfully",
+        user: user,
       });
     } catch (err) {
       console.log(err);
@@ -43,19 +50,8 @@ export class UserController {
     }
   };
 
-  generateOtp = async (email: string) => {
+  generateOtp = async (userId: string) => {
     const otp = Math.floor(1000 + Math.random() * 9000);
-    const key = email;
-    const oldValue = await this.redisService.getValue(key);
-
-    const parsedOldValue = JSON.parse(oldValue);
-    const value = JSON.stringify({
-      password: parsedOldValue.password,
-      otp: otp,
-    });
-
-    await this.redisService.setValue(key, value, 300);
-
     return otp;
   };
 
@@ -63,7 +59,10 @@ export class UserController {
     try {
       const userData = req.body;
 
-      const generatedOtp = await this.generateOtp(userData?.email);
+      const generatedOtp = await this.generateOtp(userData?.userId);
+      const key = userData?.userId;
+      const value = JSON.stringify(generatedOtp);
+
       const mailOptions = {
         from: process.env.EMAIL,
         to: userData.email,
@@ -71,6 +70,7 @@ export class UserController {
         text: `Your OTP is ${generatedOtp}`,
       };
 
+      await this.redisService.setValue(key, value, 300);
       await transporter.sendMail(mailOptions);
       return res.status(200).json({ message: "OTP sent successfully" });
     } catch (error) {
@@ -80,40 +80,49 @@ export class UserController {
 
   verifyOtp = async (req: Request, res: Response) => {
     try {
-      const { otp, email } = req.body;
+      const { otp, userId } = req.body;
 
-      const key = email;
+      const key = userId;
       const value = await this.redisService.getValue(key);
 
       const cachedValue = JSON.parse(value);
 
-      if (cachedValue.otp !== Number(otp)) {
+      const user = await this.userService.findUser(userId);
+      if (!user) {
+        return res.status(401).json({ message: "User Does Not Exist" });
+      }
+
+      if (cachedValue !== otp) {
         return res.status(401).json({ message: "Invalid OTP" });
       }
 
-      await this.userService.postUser({
-        email: email,
-        password: cachedValue.password,
-      });
+      user.verfied = true;
+      await this.userService.updateUser(user);
 
       await this.redisService.deleteKey(key);
 
       return res.status(200).json({
-        message: "OTP Verified and User created successfully",
+        message: "User Verified Successfully",
       });
     } catch (error) {}
   };
 
   completeSignUp = async (req: Request, res: Response) => {
     try {
-      const { email, username } = req.body;
+      const { email, userName, userId, companyName, gstId, role } = req.body;
 
-      const user = await this.userService.findUser(email);
+      const user = await this.userService.findUser(userId);
       if (!user)
         return res.status(406).json({ message: "User Does Not Exist" });
-      console.log(user);
 
-      user.username = username;
+      user.userName = userName;
+      user.companyName = companyName;
+      user.gstId = gstId;
+      user.role = role;
+      user.verfied = false;
+
+    
+
       await this.userService.updateUser(user);
       return res.status(200).json({ message: "Username Updated Successfully" });
     } catch (err) {
@@ -141,8 +150,7 @@ export class UserController {
       name,
       googleId
     );
-    
-    // console.log('token',token)
+
     return res.status(200).json({ token });
   };
 
@@ -172,6 +180,4 @@ export class UserController {
       return res.status(500).json({ message: "Internal Server Error" });
     }
   };
-
-  
 }

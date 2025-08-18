@@ -7,7 +7,7 @@ const app = express();
 
 app.use(
   cors({
-    origin: "https://gstio-web.vercel.app", // your frontend domain
+    origin: ["https://gstio-web.vercel.app",'http://localhost:3000'], // your frontend domain
     methods: ["GET", "POST", "PUT", "DELETE"],
     allowedHeaders: ["Content-Type", "Authorization"],
     credentials:true
