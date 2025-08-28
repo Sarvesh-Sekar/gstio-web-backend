@@ -24,25 +24,27 @@ export class UserController {
       if (userExists)
         return res.status(406).json({ message: "User Already Exists" });
 
-      const key = userData.email;
       const hashedPassword = await AuthHelper.encryptText(userData.password);
-      const value = JSON.stringify({
-        password: hashedPassword,
-        otp: 0,
-      });
-
-      console.log(hashedPassword);
 
       const postUserData = {
-        email:userData.email,
-        password:hashedPassword
-      }
+        email: userData.email,
+        password: hashedPassword,
+        verified: false,
+      };
       const user = await this.userService.postUser(postUserData);
 
+      const responseData = {
+        userId: user?.id,
+        email: user?.email,
+        verified: false,
+        details: false,
+      };
+
+      console.log(responseData);
       return res.status(201).json({
         status: "registered",
         message: "User Registered Successfully",
-        user: user,
+        user: responseData,
       });
     } catch (err) {
       console.log(err);
@@ -63,9 +65,11 @@ export class UserController {
       const key = userData?.userId;
       const value = JSON.stringify(generatedOtp);
 
+      const user = await this.userService.findUser(userData?.userId);
+
       const mailOptions = {
         from: process.env.EMAIL,
-        to: userData.email,
+        to: user.email,
         subject: "OTP Verification",
         text: `Your OTP is ${generatedOtp}`,
       };
@@ -92,17 +96,23 @@ export class UserController {
         return res.status(401).json({ message: "User Does Not Exist" });
       }
 
-      if (cachedValue !== otp) {
+      if (Number(cachedValue) !== Number(otp)) {
         return res.status(401).json({ message: "Invalid OTP" });
       }
 
-      user.verfied = true;
+      user.verified = true;
       await this.userService.updateUser(user);
 
       await this.redisService.deleteKey(key);
 
+     const token =  await this.userService.generateJWTToken(
+        user.email,
+        user.name
+      );
       return res.status(200).json({
         message: "User Verified Successfully",
+        token:token
+
       });
     } catch (error) {}
   };
@@ -120,8 +130,6 @@ export class UserController {
       user.gstId = gstId;
       user.role = role;
       user.verfied = false;
-
-    
 
       await this.userService.updateUser(user);
       return res.status(200).json({ message: "Username Updated Successfully" });

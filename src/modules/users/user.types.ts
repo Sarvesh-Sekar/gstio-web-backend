@@ -5,5 +5,5 @@ export type typeUser = {
   gstId?: string;
   companyName?: string;
   role?: "companyAdmin" | "Auditor";
-  verfied?: boolean;
+  verified?: boolean;
 };

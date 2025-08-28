@@ -24,5 +24,5 @@ export class User {
   role?: "companyAdmin" | "Auditor";
 
   @Column({ nullable: true })
-  verfied: boolean;
+  verified: boolean;
 }

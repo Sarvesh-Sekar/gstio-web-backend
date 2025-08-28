@@ -9,7 +9,7 @@ const isProd = NODE_ENV === "prod";
 export const AppDataSource = new DataSource({
   type: "postgres",
   host: DB_HOST,
-  port: 5432,
+  port: 5431,
   username: DB_USERNAME,
   password: DB_PASSWORD,
   database: DB_NAME,

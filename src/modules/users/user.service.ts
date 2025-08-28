@@ -31,6 +31,7 @@ export class UserService {
       const user = new User();
       user.email = data.email;
       user.password = data.password;
+      user.verified = data.verified;
 
       const res = await userRepo.save(user);
       return res;
@@ -63,7 +64,7 @@ export class UserService {
       user.companyName = data.companyName;
       user.gstId = data.gstId;
       user.role = data.role;
-      user.verfied = data.verfied;
+      user.verified = data.verified;
 
       const res = await userRepo.update(
         { email: data.email },
@@ -72,7 +73,7 @@ export class UserService {
           companyName: user.companyName,
           gstId: user.gstId,
           role: user.role,
-          verfied: user.verfied,
+          verified: user.verified,
         }
       );
       return res;
