@@ -4,6 +4,8 @@ import { postUserValidation } from "./user.validator";
 import { AuthHelper } from "../../helpers/auth.helpers";
 import { RedisService } from "../../services/RedisService";
 import { transporter } from "../../config/mailTransporter";
+import axios from "axios";
+import { GST_VERIFICATION_URL } from "../../urls";
 
 export class UserController {
   constructor(
@@ -105,14 +107,13 @@ export class UserController {
 
       await this.redisService.deleteKey(key);
 
-     const token =  await this.userService.generateJWTToken(
+      const token = await this.userService.generateJWTToken(
         user.email,
         user.name
       );
       return res.status(200).json({
         message: "User Verified Successfully",
-        token:token
-
+        token: token,
       });
     } catch (error) {}
   };
@@ -183,7 +184,49 @@ export class UserController {
         userExists.name
       );
 
-      return res.status(200).json({ token });
+      const userResponse = {
+        email: userExists.email,
+        userName: userExists.userName,
+        companyName: userExists.companyName,
+        gstId: userExists.gstId,
+        id: userExists.id,
+      };
+
+      return res.status(200).json({ token: token, user: userResponse });
+    } catch (err) {
+      return res.status(500).json({ message: "Internal Server Error" });
+    }
+  };
+
+  userCardData = async (req: Request, res: Response) => {
+    try {
+      const { email } = req.body;
+      const user = await this.userService.findUser(email);
+      return res.status(200).json({ user });
+    } catch (err) {
+      return res.status(500).json({ message: "Internal Server Error" });
+    }
+  };
+
+  verifyGSTID = async (req: Request, res: Response) => {
+    try {
+      const { gstId } = req.body;
+      const { GST_SECRET } = process.env;
+      const user = await this.userService.findUser(gstId);
+
+      if (user)
+        return res.status(406).json({ message: "Company Already Exists" });
+
+      const gstIdDetails = await axios.get(GST_VERIFICATION_URL, {
+        params: {
+          gstNo: gstId,
+          key_secret: GST_SECRET,
+        },
+      });
+
+      // if(gstIdDetails?.data?.error) res.status(406).json({message:"Invalid GST ID"})
+      
+      return res.status(200).json({ gstIdDetails });
     } catch (err) {
       return res.status(500).json({ message: "Internal Server Error" });
     }

@@ -18,6 +18,7 @@ export class UserService {
         .where("users.id::text = :identifier", { identifier })
         .orWhere("users.email = :identifier", { identifier })
         .orWhere("users.userName = :identifier", { identifier })
+        .orWhere("users.gstId = :identifier", { identifier })
         .getOne();
       return user;
     } catch (err) {

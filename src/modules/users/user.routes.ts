@@ -9,5 +9,7 @@ router.post("/generate-otp", UserModule.controller.sendMail);
 router.post("/verify-otp", UserModule.controller.verifyOtp);
 router.post("/auth/google", UserModule.controller.googleSignIn);
 router.post("/login", UserModule.controller.manualSignIn);
+router.post("/myData", UserModule.controller.userCardData);
+router.post("/verify-gst", UserModule.controller.verifyGSTID);
 
 export default router;
