@@ -28,8 +28,13 @@ export class AuthHelper {
   }
 
   static async verifyJwt(token: string) {
-    const { JWT_SECRET_KEY } = process.env as any;
-    const decoded: any = jwt.verify(token, JWT_SECRET_KEY);
-    return decoded;
+    try {
+      const { JWT_SECRET_KEY } = process.env as any;
+      const decoded: any = await jwt.verify(token, JWT_SECRET_KEY);
+      return decoded;
+    } catch (err) {
+      console.error("JWT verification failed:", err);
+      throw err; // rethrow so caller can handle
+    }
   }
 }

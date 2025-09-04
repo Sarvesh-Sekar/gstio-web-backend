@@ -5,6 +5,7 @@ import { AuthHelper } from "../../helpers/auth.helpers";
 import { RedisService } from "../../services/RedisService";
 import { transporter } from "../../config/mailTransporter";
 import axios from "axios";
+import {UserMiddleware} from "./user.middleware";
 import { GST_VERIFICATION_URL } from "../../urls";
 
 export class UserController {
@@ -208,7 +209,7 @@ export class UserController {
     }
   };
 
-  verifyGSTID = async (req: Request, res: Response) => {
+  verifyGSTID = async(req: Request, res: Response)=> {
     try {
       const { gstId } = req.body;
       const { GST_SECRET } = process.env;
@@ -224,10 +225,13 @@ export class UserController {
         },
       });
 
-      // if(gstIdDetails?.data?.error) res.status(406).json({message:"Invalid GST ID"})
+      // console.log(gstIdDetails);
+
+      //  if(gstIdDetails?.data?.error) res.status(406).json({message:"Invalid GST ID"})
       
-      return res.status(200).json({ gstIdDetails });
+      return res.status(200).json({ data: gstIdDetails?.data });
     } catch (err) {
+      console.log(err);
       return res.status(500).json({ message: "Internal Server Error" });
     }
   };

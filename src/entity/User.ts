@@ -1,4 +1,5 @@
-import { PrimaryGeneratedColumn, Column, Entity, Generated } from "typeorm";
+import { PrimaryGeneratedColumn, Column, Entity, OneToMany } from "typeorm";
+import { Products } from "./Products";
 
 @Entity({ name: "users" })
 export class User {
@@ -25,4 +26,7 @@ export class User {
 
   @Column({ nullable: true })
   verified: boolean;
+
+  @OneToMany(() => Products, (product) => product.productId)
+  products: Products[];
 }

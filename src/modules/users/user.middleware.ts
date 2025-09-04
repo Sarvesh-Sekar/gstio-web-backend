@@ -12,8 +12,10 @@ export class UserMiddleware {
       if (!token) {
         return res.status(401).json({ message: "Unauthorized" });
       }
-
+      
+      console.log('point 1');
       const decoded: typeUser = await AuthHelper.verifyJwt(token);
+      console.log(decoded);
       if (!decoded) {
         return res.status(401).json({ message: "Unauthorized" });
       }
@@ -24,6 +26,8 @@ export class UserMiddleware {
       next();
 
       //   if (!!decoded) return res.status(401).json({ message: "Unauthorized" });
-    } catch (err) {}
+    } catch (err) {
+      throw err;
+    }
   };
 }
