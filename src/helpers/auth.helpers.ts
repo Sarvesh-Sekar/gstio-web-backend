@@ -6,8 +6,11 @@ dotenv.config();
 type JWTPayload = {
   email: string;
   name: string;
-  googleId?: string;
+  userId?: string;
 };
+
+let userId;
+
 export class AuthHelper {
   static async encryptText(text: string): Promise<string> {
     const saltRounds = 10;
@@ -31,6 +34,9 @@ export class AuthHelper {
     try {
       const { JWT_SECRET_KEY } = process.env as any;
       const decoded: any = await jwt.verify(token, JWT_SECRET_KEY);
+      userId = decoded?.userId;
+      
+      console.log(userId + " userId");
       return decoded;
     } catch (err) {
       console.error("JWT verification failed:", err);
@@ -38,3 +44,5 @@ export class AuthHelper {
     }
   }
 }
+
+

@@ -34,12 +34,5 @@ export class Products {
   @ManyToOne(() => User, (user) => user.products)
   user: User;
 
-  @AfterInsert()
-  async afterInsert() {
 
-    const formattedProductCode = "PR" + String(this.productId).padStart(3, "0");
-    const productRepo = AppDataSource.getRepository(Products);
-    await productRepo.update(this.productId,{ productCode:formattedProductCode});
-
-  }
 }

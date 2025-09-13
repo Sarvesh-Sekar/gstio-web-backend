@@ -6,10 +6,18 @@ export class ProductsController {
 
   getProducts = async (req: Request, res: Response) => {
     try {
-      const { searchFor } = req.body;
-      const response: any = await this.productsService.getProducts(searchFor);
+      const { userId, searchFor, pageNo, count } = req.body;
 
-      if (!response?.length)
+      const fetchData = {
+        userId: userId,
+        searchFor: searchFor,
+        offset: (pageNo - 1) * count,
+        limit: count,
+      };
+
+      const response: any = await this.productsService.getProducts(fetchData);
+
+      if (!response?.products?.length)
         return res.status(404).json({ message: "Product Not Found" });
 
       return res.status(200).json(response);
@@ -29,13 +37,17 @@ export class ProductsController {
         igst,
         productPrice,
       } = req.body;
-      const productData = {
+
+      console.log(userId);
+      let productCode = "";
+      let productData = {
         userId,
         productName,
         pricePerUnit,
         cgst,
         sgst,
         igst,
+        productCode,
         productPrice,
       };
 
@@ -43,16 +55,29 @@ export class ProductsController {
         productData.productName
       );
 
-      if (productExists[0]?.userId === productData.userId)
+      if (
+        productExists[0]?.userId === productData.userId &&
+        productExists[0]?.productName === productData.productName
+      )
         return res.status(400).json({ message: "Product Already Exists" });
+
+      const lastProduct = await this.productsService.getLastEntity(
+        productData?.userId
+      );
+     
+      console.log(lastProduct);
+      if (!lastProduct?.length)
+        productData.productCode = "PR" + String(1).padStart(3, "0");
+      else {
+        productData.productCode =
+          "PR" +
+          String(Number(lastProduct[0]?.productCode.slice(3)) + 1).padStart(
+            3,
+            "0"
+          );
+      }
+
       const response = await this.productsService.postProduct(productData);
-
-      const productCode = {
-        productId: response.productId,
-        productCode: "PR" + String(response.productId).padStart(3, "0"),
-      };
-
-      await this.productsService.updateProduct(productCode);
 
       const productResponse = await this.productsService.getProducts(
         response.productName
@@ -76,15 +101,13 @@ export class ProductsController {
 
   deleteProduct = async (req: Request, res: Response) => {
     try {
-
-      const {userId,productId} = req.body;
-      const deletePayload = 
-      {
-        userId:userId,
-        productId:productId
-      }
+      const { userId, productId } = req.body;
+      const deletePayload = {
+        userId: userId,
+        productId: productId,
+      };
       const response = await this.productsService.deleteProduct(deletePayload);
-      return res.status(200).json({message:"Product Deleted Successfully"});
+      return res.status(200).json({ message: "Product Deleted Successfully" });
     } catch (err) {
       throw err;
     }

@@ -119,13 +119,13 @@ export class UserService {
     }
   };
 
-  generateJWTToken = async (email: string, name: string, id?: string) => {
+  generateJWTToken = async (payload: any) => {
     try {
-      const payload = {
-        email: email,
-        name: name,
-        googleId: id,
-      };
+      // const payload = {
+      //   email: email,
+      //   name: name,
+      //   userId: userId,
+      // };
 
       const response = await AuthHelper.generateJwt(payload);
       return response;

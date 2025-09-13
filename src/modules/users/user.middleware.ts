@@ -8,14 +8,14 @@ export class UserMiddleware {
   constructor(private userService: UserService) {}
   verifyUser = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const token = req.header("X-Authorization-Token");
+      const token = req.header("Authorization");
       if (!token) {
         return res.status(401).json({ message: "Unauthorized" });
       }
+
       
-      console.log('point 1');
       const decoded: typeUser = await AuthHelper.verifyJwt(token);
-      console.log(decoded);
+      
       if (!decoded) {
         return res.status(401).json({ message: "Unauthorized" });
       }
@@ -23,6 +23,7 @@ export class UserMiddleware {
       if (!user) {
         return res.status(401).json({ message: "Unauthorized" });
       }
+      req.body.userId = decoded?.userId;
       next();
 
       //   if (!!decoded) return res.status(401).json({ message: "Unauthorized" });

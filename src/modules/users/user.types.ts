@@ -6,4 +6,5 @@ export type typeUser = {
   companyName?: string;
   role?: "companyAdmin" | "Auditor";
   verified?: boolean;
+  userId?: string;
 };

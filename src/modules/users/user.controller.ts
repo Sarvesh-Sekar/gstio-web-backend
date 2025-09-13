@@ -5,7 +5,7 @@ import { AuthHelper } from "../../helpers/auth.helpers";
 import { RedisService } from "../../services/RedisService";
 import { transporter } from "../../config/mailTransporter";
 import axios from "axios";
-import {UserMiddleware} from "./user.middleware";
+import { UserMiddleware } from "./user.middleware";
 import { GST_VERIFICATION_URL } from "../../urls";
 
 export class UserController {
@@ -108,10 +108,11 @@ export class UserController {
 
       await this.redisService.deleteKey(key);
 
-      const token = await this.userService.generateJWTToken(
-        user.email,
-        user.name
-      );
+      const token = await this.userService.generateJWTToken({
+        email: user.email,
+        name: user.userName,
+        userId: user?.id,
+      });
       return res.status(200).json({
         message: "User Verified Successfully",
         token: token,
@@ -155,11 +156,11 @@ export class UserController {
     if (!userExists)
       return res.status(406).json({ message: "User Does Not Exist" });
 
-    const token = await this.userService.generateJWTToken(
-      email,
-      name,
-      googleId
-    );
+    const token = await this.userService.generateJWTToken({
+      email: email,
+      name: userExists?.userName,
+      userId: userExists?.id,
+    });
 
     return res.status(200).json({ token });
   };
@@ -180,10 +181,11 @@ export class UserController {
       if (!isPasswordCorrect)
         return res.status(406).json({ message: "Incorrect Password" });
 
-      const token = await this.userService.generateJWTToken(
-        userExists.email,
-        userExists.name
-      );
+      const token = await this.userService.generateJWTToken({
+        email: userExists.email,
+        name: userExists.userName,
+        userId: userExists?.id,
+      });
 
       const userResponse = {
         email: userExists.email,
@@ -209,7 +211,7 @@ export class UserController {
     }
   };
 
-  verifyGSTID = async(req: Request, res: Response)=> {
+  verifyGSTID = async (req: Request, res: Response) => {
     try {
       const { gstId } = req.body;
       const { GST_SECRET } = process.env;
@@ -228,7 +230,7 @@ export class UserController {
       // console.log(gstIdDetails);
 
       //  if(gstIdDetails?.data?.error) res.status(406).json({message:"Invalid GST ID"})
-      
+
       return res.status(200).json({ data: gstIdDetails?.data });
     } catch (err) {
       console.log(err);
