@@ -6,11 +6,12 @@ export class ProductsController {
 
   getProducts = async (req: Request, res: Response) => {
     try {
-      const { userId, searchFor, pageNo, count } = req.body;
+      const { userId, searchFor, pageNo, count,productId } = req.body;
 
       const fetchData = {
         userId: userId,
         searchFor: searchFor,
+        productId: productId,
         offset: (pageNo - 1) * count,
         limit: count,
       };
@@ -18,7 +19,7 @@ export class ProductsController {
       const response: any = await this.productsService.getProducts(fetchData);
 
       if (!response?.products?.length)
-        return res.status(404).json({ message: "Product Not Found" });
+        return res.status(201).json({ message: "Product Not Found" });
 
       return res.status(200).json(response);
     } catch (err) {
@@ -38,7 +39,6 @@ export class ProductsController {
         productPrice,
       } = req.body;
 
-      console.log(userId);
       let productCode = "";
       let productData = {
         userId,
@@ -51,21 +51,25 @@ export class ProductsController {
         productPrice,
       };
 
-      const productExists: any = await this.productsService.getProducts(
-        productData.productName
-      );
+
+
+      const productExists: any = await this.productsService.getProducts({
+        userId: userId,
+        searchFor: productData?.productName,
+        offset: 0,
+        limit: 1,
+      });
 
       if (
-        productExists[0]?.userId === productData.userId &&
-        productExists[0]?.productName === productData.productName
+        productExists?.products[0]?.userId === productData.userId &&
+        productExists?.products[0]?.productName === productData.productName
       )
         return res.status(400).json({ message: "Product Already Exists" });
 
       const lastProduct = await this.productsService.getLastEntity(
         productData?.userId
       );
-     
-      console.log(lastProduct);
+
       if (!lastProduct?.length)
         productData.productCode = "PR" + String(1).padStart(3, "0");
       else {
@@ -83,7 +87,7 @@ export class ProductsController {
         response.productName
       );
 
-      return res.status(200).json(productResponse);
+      return res.status(200).json({ message: "Product Added Successfully" });
     } catch (err) {
       throw err;
     }
@@ -93,7 +97,16 @@ export class ProductsController {
     try {
       const data = req.body;
       const response = await this.productsService.updateProduct(data);
-      return res.status(200).json(response);
+      if (response === "Unauthorized")
+        return res.status(401).json({
+          success: false,
+          message: "Unauthorized",
+        });
+      return res.status(200).json({
+        success: true,
+        message: "Product Updated Successfully",
+        product: response,
+      });
     } catch (err) {
       throw err;
     }
@@ -107,7 +120,15 @@ export class ProductsController {
         productId: productId,
       };
       const response = await this.productsService.deleteProduct(deletePayload);
-      return res.status(200).json({ message: "Product Deleted Successfully" });
+
+      if (!response?.affected)
+        return res
+          .status(404)
+          .json({ success: false, message: "Product Not Found" });
+
+      return res
+        .status(200)
+        .json({ success: true, message: "Product Deleted Successfully" });
     } catch (err) {
       throw err;
     }

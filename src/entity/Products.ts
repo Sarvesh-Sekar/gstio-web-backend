@@ -1,13 +1,20 @@
-import { PrimaryGeneratedColumn, Column, Entity, ManyToOne,AfterInsert } from "typeorm";
-import {User} from "./User";
-import {AppDataSource} from "../dataSource/dataSource";
+import {
+  PrimaryGeneratedColumn,
+  Column,
+  Entity,
+  ManyToOne,
+  CreateDateColumn,
+  AfterInsert,
+} from "typeorm";
+import { User } from "./User";
+import { AppDataSource } from "../dataSource/dataSource";
 
 @Entity({ name: "products" })
 export class Products {
   @PrimaryGeneratedColumn("increment")
   productId: number;
 
-  @Column({nullable:true})
+  @Column({ nullable: true })
   productCode: string;
 
   @Column()
@@ -31,8 +38,9 @@ export class Products {
   @Column()
   productPrice: number;
 
+  @CreateDateColumn()
+  createdAt: Date;
+
   @ManyToOne(() => User, (user) => user.products)
   user: User;
-
-
 }

@@ -7,55 +7,36 @@ export class ProductsService {
   getProducts = async (payload: any) => {
     try {
       const productRepo = AppDataSource.getRepository(Products);
-      const [products, totalCount]: any = await productRepo
-        .createQueryBuilder("products")
-        .where("products.productName ILIKE :searchFor", {
+      const query: any = await productRepo.createQueryBuilder("products");
+
+      if (payload?.searchFor)
+        query.where("products.productName ILIKE :searchFor", {
           searchFor: `%${payload.searchFor}%`,
-        })
+        });
+
+      if (payload?.productId)
+        query.andWhere("products.productId = :productId", {
+          productId: payload?.productId,
+        });
+
+      const [products, totalCount] = await query
+
         .andWhere("products.userId = :userId", {
           userId: payload.userId,
         })
+
+        .orderBy("products.createdAt", "DESC")
         .skip(payload?.offset)
         .take(payload?.limit)
-        .select([
-          "products.productId",
-          "products.productName",
-          "products.userId",
-        ])
         .getManyAndCount();
 
       return {
         products: products,
         totalCount: totalCount,
-        itemsPerPage: payload.limit,
-        currentPage: payload.offset + 1,
+        count: payload.limit,
+        pageNo: payload.offset / 10 + 1,
         totalPages: Math.ceil(totalCount / payload.limit),
       };
-
-      // const searchCondtion =
-      // {
-      //   productName:payload?.searchFor,
-      //   userId:payload?.userId
-      // }
-
-      // const {productName,...rest} = searchCondtion
-      // const whereCondition = !payload?.searchFor?.length ? rest:searchCondtion
-      // const [products,totalCount] = await productRepo.findAndCount({
-      //   where: whereCondition,
-      //   skip:payload.offset,
-      //   take:payload.limit,
-      //   select:["productId","productName","userId"],
-
-      // })
-
-      // return {
-      //   products:products,
-      //   totalCount:totalCount,
-      //   itemsPerPage:payload.limit,
-      //   currentPage:(payload.offset+1)/10,
-      //   totalPages:Math.ceil(totalCount/payload.limit)
-
-      // };
     } catch (err) {
       throw err;
     }
@@ -65,6 +46,7 @@ export class ProductsService {
     try {
       const productRepo = AppDataSource.getRepository(Products);
       const product = new Products();
+      console.log("came")
       product.userId = data.userId;
       product.productCode = data.productCode;
       product.productName = data.productName;
@@ -82,11 +64,11 @@ export class ProductsService {
 
   updateProduct = async (data: any) => {
     try {
-      // if(!data.productId) return "Product Id is required";
       const productRepo = await AppDataSource.getRepository(Products);
       const product = await productRepo.findOneBy({
         productId: data.productId,
       });
+      if (product?.userId !== data.userId) return "Unauthorized";
       product.productCode = data.productCode || product.productCode;
       product.productName = data.productName || product.productName;
       product.pricePerUnit = data.pricePerUnit || product.pricePerUnit;
@@ -127,10 +109,9 @@ export class ProductsService {
         where: { userId: userId },
         order: { productId: "DESC" },
         take: 1,
-        select: 
-        {
-          productId:true,
-          productCode:true
+        select: {
+          productId: true,
+          productCode: true,
         },
       });
 
